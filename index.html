@@ -1,0 +1,277 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fake Job Detector</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #e0e7ff, #f5f3ff);
+            min-height: 100vh;
+            padding: 30px 15px;
+        }
+
+        .container {
+            max-width: 750px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #3730a3;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin: 15px 0 7px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 7px;
+            font-size: 15px;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 90px;
+        }
+
+        button {
+            width: 100%;
+            margin-top: 25px;
+            padding: 14px;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 17px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #3730a3;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+
+        #result {
+            display: none;
+            margin-top: 25px;
+            padding: 18px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 18px;
+        }
+
+        .genuine {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .fraud {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .error {
+            background: #fef3c7;
+            color: #92400e;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Fake Job Detector</h1>
+
+    <p class="subtitle">
+        AI Based Fake Job Prediction System
+    </p>
+
+    <form id="jobForm">
+
+        <label>Job Title</label>
+        <input type="text" id="title" required
+               placeholder="Example: Python Developer">
+
+        <label>Company Profile</label>
+        <textarea id="company_profile"
+                  placeholder="Enter company details"></textarea>
+
+        <label>Job Description</label>
+        <textarea id="description"
+                  placeholder="Enter job description"></textarea>
+
+        <label>Requirements</label>
+        <textarea id="requirements"
+                  placeholder="Enter job requirements"></textarea>
+
+        <label>Employment Type</label>
+        <select id="employment_type">
+            <option value="unknown">Unknown</option>
+            <option value="Full-time">Full-time</option>
+            <option value="Part-time">Part-time</option>
+            <option value="Contract">Contract</option>
+            <option value="Temporary">Temporary</option>
+            <option value="Other">Other</option>
+        </select>
+
+        <label>Required Experience</label>
+        <select id="required_experience">
+            <option value="unknown">Unknown</option>
+            <option value="Internship">Internship</option>
+            <option value="Entry level">Entry level</option>
+            <option value="Associate">Associate</option>
+            <option value="Mid-Senior level">Mid-Senior level</option>
+            <option value="Director">Director</option>
+            <option value="Executive">Executive</option>
+        </select>
+
+        <label>Required Education</label>
+        <select id="required_education">
+            <option value="unknown">Unknown</option>
+            <option value="High School or equivalent">High School</option>
+            <option value="Bachelor's Degree">Bachelor's Degree</option>
+            <option value="Master's Degree">Master's Degree</option>
+            <option value="Unspecified">Unspecified</option>
+            <option value="Other">Other</option>
+        </select>
+
+        <label>Telecommuting</label>
+        <select id="telecommuting">
+            <option value="0">No</option>
+            <option value="1">Yes</option>
+        </select>
+
+        <label>Company Logo Available?</label>
+        <select id="has_company_logo">
+            <option value="0">No</option>
+            <option value="1">Yes</option>
+        </select>
+
+        <label>Screening Questions Available?</label>
+        <select id="has_questions">
+            <option value="0">No</option>
+            <option value="1">Yes</option>
+        </select>
+
+        <button type="submit" id="predictBtn">
+            Check Job Authenticity
+        </button>
+
+    </form>
+
+    <div id="result"></div>
+
+</div>
+
+<script>
+
+document.getElementById("jobForm").addEventListener("submit", async function(event) {
+
+    event.preventDefault();
+
+    const button = document.getElementById("predictBtn");
+    const result = document.getElementById("result");
+
+    const jobData = {
+        title: document.getElementById("title").value,
+        company_profile: document.getElementById("company_profile").value,
+        description: document.getElementById("description").value,
+        requirements: document.getElementById("requirements").value,
+
+        employment_type: document.getElementById("employment_type").value,
+        required_experience: document.getElementById("required_experience").value,
+        required_education: document.getElementById("required_education").value,
+
+        telecommuting: Number(document.getElementById("telecommuting").value),
+        has_company_logo: Number(document.getElementById("has_company_logo").value),
+        has_questions: Number(document.getElementById("has_questions").value)
+    };
+
+    button.disabled = true;
+    button.innerText = "Checking...";
+    result.style.display = "block";
+    result.className = "";
+    result.innerText = "Please wait, analyzing job details...";
+
+    try {
+
+        const response = await fetch("/predict", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(jobData)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.detail
+                ? JSON.stringify(data.detail)
+                : "Prediction failed");
+        }
+
+        const probability = (data.probability * 100).toFixed(2);
+
+        if (data.fraudulent === 1) {
+            result.className = "fraud";
+            result.innerHTML =
+                "<h2>⚠️ Potential Fake Job</h2>" +
+                "<p>Fraud Probability: " + probability + "%</p>";
+        } else {
+            result.className = "genuine";
+            result.innerHTML =
+                "<h2>✅ Potential Genuine Job</h2>" +
+                "<p>Fraud Probability: " + probability + "%</p>";
+        }
+
+    } catch (error) {
+
+        result.className = "error";
+        result.innerText = "Error: " + error.message;
+
+    } finally {
+
+        button.disabled = false;
+        button.innerText = "Check Job Authenticity";
+
+    }
+
+});
+
+</script>
+
+</body>
+</html>
