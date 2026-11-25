@@ -2,4 +2,4 @@ fastapi
 uvicorn
 pandas
 joblib
-scikit-learn == 1.x.x
+scikit-learn == 1.9.1
